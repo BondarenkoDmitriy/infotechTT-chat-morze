@@ -4,6 +4,7 @@ import http from 'http';
 import { Server, Socket } from 'socket.io';
 import { User } from './types/user';
 import { handleAuthorization, handleMessage, handleMorseMessage } from './chat/messageUtils';
+import apiRoutes from './api/routes';
 
 const app = express();
 const server = http.createServer(app);
@@ -56,6 +57,12 @@ io.on('connection', (socket: Socket) => {
   socket.on('disconnect', () => {
     console.log('Користувача відключено');
   });
+
+  // Включаємо наші API маршрути
+  app.use('/api', apiRoutes);
+
+  // Розміщуємо сокет в об'єкті app, щоб його можна було використовувати у наших контролерах
+  app.set('socket', socket);
 });
 
 // Запускаємо сервер на порту 5000: http://localhost:5000
