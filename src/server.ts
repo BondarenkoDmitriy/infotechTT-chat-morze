@@ -4,7 +4,7 @@ import http from 'http';
 import { Server, Socket } from 'socket.io';
 import { User } from './types/user';
 import { handleAuthorization, handleMessage, handleMorseMessage } from './chat/messageUtils';
-import apiRoutes from './api/routes';
+import { router } from './api/routes';
 
 const app = express();
 const server = http.createServer(app);
@@ -33,11 +33,11 @@ io.on('connection', (socket: Socket) => {
     handleMessage(socket, data);
   });
 
-  // Обробка події 'morseMessage', яка буде викликана, коли клієнт надішле повідомлення в азбуці Морзе
-  socket.on('morseMessage', (morseCode: string) => {
-    // Викликаємо функцію для обробки повідомлень в азбуці Морзе
-    handleMorseMessage(socket, morseCode);
-  });
+  // // Обробка події 'morseMessage', яка буде викликана, коли клієнт надішле повідомлення в азбуці Морзе
+  // socket.on('morseMessage', (morseCode: string) => {
+  //   // Викликаємо функцію для обробки повідомлень в азбуці Морзе
+  //   handleMorseMessage(socket, morseCode);
+  // });
 
   // Обробка події 'morseMessage', яка буде викликана, коли клієнт надішле повідомлення в азбуці Морзе
   socket.on('morseMessage', (morseCode: string) => {
@@ -59,7 +59,7 @@ io.on('connection', (socket: Socket) => {
   });
 
   // Включаємо наші API маршрути
-  app.use('/api', apiRoutes);
+  app.use('/api', router);
 
   // Розміщуємо сокет в об'єкті app, щоб його можна було використовувати у наших контролерах
   app.set('socket', socket);
