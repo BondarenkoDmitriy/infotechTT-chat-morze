@@ -21,5 +21,3 @@ export function getUserRole(req: Request, res: Response) {
     res.status(404).json({ success: false, message: 'Користувача не знайдено' });
   }
 }
-
-// Hello
