@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { Socket } from 'socket.io';
-import { handleMessage, handleMorseMessage } from '../chat/messageUtils';
+import { handleMessage, handleMorseMessage } from '../helper/messageUtils';
 
 // Обробник для звичайного текстового повідомлення
 export function sendMessage(req: Request, res: Response) {

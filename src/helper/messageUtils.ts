@@ -1,19 +1,14 @@
 import { Server, Socket } from 'socket.io';
 import { textToMorse, morseToText } from './morseUtils';
 import { User } from '../types/user';
+import { isAuthorizedUser } from './variables';
+import { authorizedUsers } from '../server';
 
-const authorizedUsers: { [username: string]: User } = {};
+// export function handleAuthorization(username: string) {
 
-export function handleAuthorization(socket: Socket, username: string) {
-  if (!authorizedUsers[username]) {
-    // Якщо ім'я користувача не існує у структурі даних, додаємо його за участю "user"
-    authorizedUsers[username] = { role: 'user' };
-    console.log(`Користувач "${username}" успішно авторизован.`);
-  }
-
-  // Надсилаємо клієнту підтвердження авторизації та його роль
-  socket.emit('authorized', { username, role: authorizedUsers[username].role });
-}
+//   // Надсилаємо клієнту підтвердження авторизації та його роль
+//   socket.emit('authorized', { username, role: authorizedUsers[username].role });
+// }
 
 export function handleMessage(socket: Socket, data: string) {
   const { username } = socket.data;
