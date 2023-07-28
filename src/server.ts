@@ -1,4 +1,3 @@
-// src/server.ts
 import express from 'express';
 import http from 'http';
 import { Server, Socket } from 'socket.io';
@@ -17,7 +16,7 @@ const io = new Server(server, {
   },
 }); // Створюємо екземпляр Server, передаючи HTTP сервер
 
-const authorizedUsers: { [username: string]: { role: UserRole } } = {};
+const authorizedUsers: User[] = [];
 
 // Обробка WebSocket з'єднань
 io.on('connection', (socket: Socket) => {
@@ -26,14 +25,21 @@ io.on('connection', (socket: Socket) => {
   // Обробка події 'authorize', яка буде викликана, коли клієнт надішле запит на авторизацію
   socket.on('authorize', (data: { username: string; role: UserRole }) => {
     const { username, role } = data;
-    if (!authorizedUsers[username]) {
+    const isAuthorizedUser = authorizedUsers.some(user => user.username !== username)
+    let newUser: User = {
+      username: '',
+      role: UserRole.User
+    };
+
+    if (isAuthorizedUser) {
+       newUser = { username, role };
       // Якщо ім'я користувача не існує у структурі даних, додаємо його з вказаною роллю
-      authorizedUsers[username] = { role };
-      console.log(`Користувач "${username}" успішно авторизован з роллю "${role}".`);
+      authorizedUsers.push(newUser);
+      console.log(`Користувач "${newUser.username}" успішно авторизован з роллю "${newUser.role}".`);
     }
 
     // Надсилаємо клієнту підтвердження авторизації та його роль
-    socket.emit('authorized', { username, role: authorizedUsers[username].role });
+    socket.emit('authorized', newUser);
   });
 
   socket.on('chat message', (message) => {
@@ -49,7 +55,8 @@ io.on('connection', (socket: Socket) => {
   // Обробка події 'morseMessage', яка буде викликана, коли клієнт надішле повідомлення в азбуці Морзе
   socket.on('morseMessage', (morseCode: string) => {
     const { username } = socket.data;
-    if (!authorizedUsers[username]) {
+    const isAuthorizedUser = authorizedUsers.every(user => user.username !== username)
+    if (isAuthorizedUser) {
       console.log(`Користувач "${username}" не авторизований.`);
       return;
     }
