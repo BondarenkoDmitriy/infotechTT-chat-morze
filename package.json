@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start_dev_server": "nodemon src/server.ts",
+    "dev": "nodemon src/server.ts",
     "start_client": "nodemon src/client.ts"
   },
   "keywords": [],
