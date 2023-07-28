@@ -1,31 +1,50 @@
-// src/server.ts
 import express from 'express';
 import http from 'http';
 import { Server, Socket } from 'socket.io';
 import { User } from './types/user';
 import { handleAuthorization, handleMessage, handleMorseMessage } from './chat/messageUtils';
 import { router } from './api/routes';
+import path from 'path';
+import { UserRole } from './types/role';
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server); // Створюємо екземпляр Server, передаючи HTTP сервер
+const io = new Server(server, {
+  cors: {
+    origin: 'http://localhost:3000',
+    methods: ['GET', 'POST'],
+  },
+}); // Створюємо екземпляр Server, передаючи HTTP сервер
 
-const authorizedUsers: { [username: string]: User } = {};
+const authorizedUsers: User[] = [];
 
 // Обробка WebSocket з'єднань
 io.on('connection', (socket: Socket) => {
   console.log('Підключення нового користувача');
 
   // Обробка події 'authorize', яка буде викликана, коли клієнт надішле запит на авторизацію
-  socket.on('authorize', (username: string) => {
-    if (!authorizedUsers[username]) {
-      // Якщо ім'я користувача не існує у структурі даних, додаємо його за участю "user"
-      authorizedUsers[username] = { role: 'user' };
-      console.log(`Користувач "${username}" успішно авторизован.`);
+  socket.on('authorize', (data: { username: string; role: UserRole }) => {
+    const { username, role } = data;
+    const isAuthorizedUser = authorizedUsers.some(user => user.username !== username)
+    let newUser: User = {
+      username: '',
+      role: UserRole.User
+    };
+
+    if (isAuthorizedUser) {
+       newUser = { username, role };
+      // Якщо ім'я користувача не існує у структурі даних, додаємо його з вказаною роллю
+      authorizedUsers.push(newUser);
+      console.log(`Користувач "${newUser.username}" успішно авторизован з роллю "${newUser.role}".`);
     }
 
     // Надсилаємо клієнту підтвердження авторизації та його роль
-    socket.emit('authorized', { username, role: authorizedUsers[username].role });
+    socket.emit('authorized', newUser);
+  });
+
+  socket.on('chat message', (message) => {
+    console.log('Получено сообщение:', message);
+    io.emit('chat message', message); // Отправка сообщения всем подключенным клиентам
   });
 
   socket.on('message', (data: string) => {
@@ -33,16 +52,11 @@ io.on('connection', (socket: Socket) => {
     handleMessage(socket, data);
   });
 
-  // // Обробка події 'morseMessage', яка буде викликана, коли клієнт надішле повідомлення в азбуці Морзе
-  // socket.on('morseMessage', (morseCode: string) => {
-  //   // Викликаємо функцію для обробки повідомлень в азбуці Морзе
-  //   handleMorseMessage(socket, morseCode);
-  // });
-
   // Обробка події 'morseMessage', яка буде викликана, коли клієнт надішле повідомлення в азбуці Морзе
   socket.on('morseMessage', (morseCode: string) => {
     const { username } = socket.data;
-    if (!authorizedUsers[username]) {
+    const isAuthorizedUser = authorizedUsers.every(user => user.username !== username)
+    if (isAuthorizedUser) {
       console.log(`Користувач "${username}" не авторизований.`);
       return;
     }
@@ -60,6 +74,11 @@ io.on('connection', (socket: Socket) => {
 
   // Включаємо наші API маршрути
   app.use('/api', router);
+
+  const publicPath = path.join(__dirname, '../FrontEnd/build');
+  app.use(express.static(publicPath));
+
+  // app.use(express.static('public'));
 
   // Розміщуємо сокет в об'єкті app, щоб його можна було використовувати у наших контролерах
   app.set('socket', socket);
