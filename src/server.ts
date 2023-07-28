@@ -17,18 +17,20 @@ const io = new Server(server, {
   },
 }); // Створюємо екземпляр Server, передаючи HTTP сервер
 
-export let authorizedUsers: User[] = [];
+export let authorizedUsers: User[] | any = [];
+const uniqueUser = new Map();
 
 // Обробка WebSocket з'єднань
 io.on('connection', (socket: Socket) => {
   console.log('Підключення нового користувача');
 
   // Обробка події 'authorize', яка буде викликана, коли клієнт надішле запит на авторизацію
-  socket.on('authorize', (data: { username: string; role: UserRole }) => {
+  socket.on('authorized', (data: { username: string; role: UserRole }) => {
     console.log('start');
     const { username, role } = data;
     let autorizedUser = { username, role };
-    authorizedUsers.push(autorizedUser);
+    authorizedUsers.push({user: autorizedUser, socket: socket});
+    uniqueUser.set(username, socket);
 
     console.log(authorizedUsers);
 
@@ -41,7 +43,28 @@ io.on('connection', (socket: Socket) => {
     socket.emit('authorized', autorizedUser);
   });
 
+  socket.on('privateMessage', (data: { toUsername: string, message: string, from: string }) => {
+    // const recipientUser = uniqueUser.get(data.toUsername);
+    console.log('data', data);
+    const recipientUser = authorizedUsers.find((item: any) => item.user.username == data.toUsername)
+
+    console.log('user', recipientUser.user);
+
+    if (recipientUser) {
+      try {
+        console.log('++++++++++++++++');
+        recipientUser.socket.emit('message123', {from: data.from, text: data.message});
+      } catch (error) {
+        console.log('error', error);
+      }
+      
+    } else {
+      socket.emit('recipientNotConnected', 'Not found this user')
+    }
+  });
+
   socket.on('chat message', (message) => {
+    console.log('start message');
     console.log('Получено сообщение:', message);
     io.emit('chat message', message); // Отправка сообщения всем подключенным клиентам
   });
