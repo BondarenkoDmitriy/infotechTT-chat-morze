@@ -27,11 +27,7 @@
     npm run test
 
 ## Technologies used:
-  Node.js
-  Express.js
-  TypeScript
-  Cors
-  Jest
+  Node.js | Express.js | TypeScript | Cors | Jest
 
   ## Автор
   Бондаренко Дмитро
