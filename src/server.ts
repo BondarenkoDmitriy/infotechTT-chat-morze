@@ -6,7 +6,6 @@ import { handleMessage } from './helper/messageUtils';
 import { router } from './api/routes';
 import path from 'path';
 import { UserRole } from './types/role';
-import { isAuthorizedUser } from './helper/variables';
 import { morseToText } from './helper/morseUtils';
 
 const app = express();
@@ -36,6 +35,12 @@ io.on('connection', (socket: Socket) => {
 
     // Надсилаємо клієнту підтвердження авторизації та його роль
     socket.emit('authorized', autorizedUser);
+  });
+
+  socket.on('getAllUsers', () => {
+    console.log('Отримати список усіх користувачів');
+      console.log('authorizedUsers', authorizedUsers);
+      socket.emit('allUsers', usersWithSocket);
   });
 
   socket.on('chat message', (message) => {
